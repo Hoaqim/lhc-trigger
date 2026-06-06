@@ -28,7 +28,7 @@ def load_ckpt(model, opt):
     except s3.exceptions.NoSuchKey:
         return 0, 0, float("inf")
     c = torch.load(io.BytesIO(obj), map_location="cpu")
-    model.module.load_state_dict(c["model"])
+    mod el.module.load_state_dict(c["model"])
     opt.load_state_dict(c["opt"])
 
     return c["epoch"], c["step"], c["best"]
@@ -71,9 +71,15 @@ def main():
                 save_ckpt(model, opt, epoch, step, best)
                 dist.destroy_process_group()
                 os._exit(1)
-    if dist.get_rank()==0:
-        mlflow.pytorch.log_model(model.module, "model", registered_model_name="higgs-classifier")
-        mlflow.end_run()
+    if dist.get_rank() == 0:
+        import numpy as np
+        sd = model.module.state_dict()
+        np.savez("/tmp/weights.npz",
+            w0=sd["net.0.weight"].cpu().numpy(), b0=sd["net.0.bias"].cpu().numpy(),
+            w3=sd["net.3.weight"].cpu().numpy(), b3=sd["net.3.bias"].cpu().numpy(),
+            w5=sd["net.5.weight"].cpu().numpy(), b5=sd["net.5.bias"].cpu().numpy())
+        boto3.client("s3").upload_file("/tmp/weights.npz", CKPT_BUCKET, "model/weights.npz")
+
     dist.destroy_process_group()
 
 if __name__ == "__main__":
