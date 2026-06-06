@@ -1,0 +1,5 @@
+kafka-python
+pandas
+mlflow
+fastapi
+uvicorn
