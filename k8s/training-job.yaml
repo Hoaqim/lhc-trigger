@@ -1,0 +1,20 @@
+apiVersion: batch/v1
+kind: Job
+metadata: { name: higgs-train }
+spec:
+  backoffLimit: 6
+  template:
+    spec:
+      serviceAccountName: training-sa
+      restartPolicy: OnFailure
+      nodeSelector: { workload: training }
+      tolerations: [{ key: spot, value: "true", effect: NoSchedule }]
+      terminationGracePeriodSeconds: 120
+      containers:
+        - name: train
+          image: <ACCOUNT>.dkr.ecr.eu-central-1.amazonaws.com/hep-training:latest
+          command: ["torchrun", "--nproc_per_node=1", "train.py"]
+          env:
+            - { name: CKPT_BUCKET, value: hep-ckpts-xxxx }
+            - { name: MLFLOW_URI, value: "http://mlflow:5000" }
+            - { name: EPOCHS, value: "20" }
