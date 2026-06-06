@@ -5,6 +5,7 @@ from torch.utils.data import DataLoader, DistributedSampler
 import mlflow
 from model import HiggsMLP
 from data import HiggsDataset
+from botocore.exceptions import ClientError  
 
 CKPT_BUCKET = os.environ["CKPT_BUCKET"]
 CKPT_KEY    = os.environ.get("CKPT_KEY", "checkpoints/latest.pt")
@@ -15,22 +16,21 @@ def _on_sigterm(*_):
     global _stop; _stop = True
 signal.signal(signal.SIGTERM, _on_sigterm)
 
+
 def save_ckpt(model, opt, epoch, step, best):
-    if dist.get_rank() != 0: return
-    buf = io.BytesIO
+    if dist.get_rank() != 0:                   
+        return
     torch.save({"model": model.module.state_dict(), "opt": opt.state_dict(),
-                "epoch": epoch, "step": step, "best": best}, buf)
-    s3.put_object(Bucket=CKPT_BUCKET, Key=CKPT_KEY, Body=buf.getvalue())
+                "epoch": epoch, "step": step, "best": best}, "/tmp/ckpt.pt")
+    s3.upload_file("/tmp/ckpt.pt", CKPT_BUCKET, CKPT_KEY)
 
 def load_ckpt(model, opt):
     try:
-        obj = s3.get_object(Bucket=CKPT_BUCKET, Key=CKPT_KEY)["BODY"].read()
-    except s3.exceptions.NoSuchKey:
+        s3.download_file(CKPT_BUCKET, CKPT_KEY, "/tmp/ckpt.pt")
+    except ClientError:                       
         return 0, 0, float("inf")
-    c = torch.load(io.BytesIO(obj), map_location="cpu")
-    model.module.load_state_dict(c["model"])
-    opt.load_state_dict(c["opt"])
-
+    c = torch.load("/tmp/ckpt.pt", map_location="cpu")
+    model.module.load_state_dict(c["model"]); opt.load_state_dict(c["opt"])
     return c["epoch"], c["step"], c["best"]
 
 def main():
@@ -52,9 +52,8 @@ def main():
     loader = DataLoader(ds, batch_size=4096, sampler=sampler, num_workers=4)
 
     if dist.get_rank() == 0:
-        mlflow.set_tracking_uri(os.environ["MLFLOW_URI"])
-        mlflow.set_experiment("higgs-classifier")
-        mlflow.start_run()
+        mlflow.set_tracking_uri(os.environ.get("MLFLOW_URI", "sqlite:///mlflow.db"))
+        mlflow.set_experiment("higgs-classifier"); mlflow.start_run
 
     for epoch in range(start_epoch, int(os.environ.get("EPOCHS", 20))):
         sampler.set_epoch(epoch)

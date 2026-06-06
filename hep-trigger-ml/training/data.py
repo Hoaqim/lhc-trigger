@@ -9,5 +9,5 @@ class HiggsDataset(Dataset):
         self.y = torch.tensor(df[0].values, dtype=torch.float32)
         self.X = torch.tensor(df.iloc[:,1:].values, dtype=torch.float32)
     
-    def __len__(self): return self.y
+    def __len__(self): return self.X.shape[0]
     def __getitem__(self, i): return self.X[i], self.y[i]
