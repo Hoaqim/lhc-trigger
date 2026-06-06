@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: dashboard }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: dashboard } }
+  template:
+    metadata: { labels: { app: dashboard } }
+    spec:
+      containers:
+        - name: dashboard
+          image: ecr_repos/hep-dashboard:latest
+          ports: [{ containerPort: 8501 }]
+          env:
+            - { name: INFERENCE_URL, value: "http://inference:8000" }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: dashboard }
+spec:
+  type: LoadBalancer                          
+  selector: { app: dashboard }
+  ports: [{ port: 80, targetPort: 8501 }]

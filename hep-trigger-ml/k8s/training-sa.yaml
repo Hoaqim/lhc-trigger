@@ -3,4 +3,4 @@ kind: ServiceAccount
 metadata:
   name: training-sa
   annotations:
-    eks.amazonaws.com/role-arn: <training_role_arn>
+    eks.amazonaws.com/role-arn: training_role_arn
