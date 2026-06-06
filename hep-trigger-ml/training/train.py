@@ -28,7 +28,7 @@ def load_ckpt(model, opt):
     except s3.exceptions.NoSuchKey:
         return 0, 0, float("inf")
     c = torch.load(io.BytesIO(obj), map_location="cpu")
-    mod el.module.load_state_dict(c["model"])
+    model.module.load_state_dict(c["model"])
     opt.load_state_dict(c["opt"])
 
     return c["epoch"], c["step"], c["best"]
