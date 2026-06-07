@@ -86,3 +86,11 @@ resource "aws_lambda_permission" "events" {
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.tick.arn
 }
+
+resource "aws_lambda_permission" "stats_url" {
+  statement_id           = "FunctionURLAllowPublicAccess"
+  action                 = "lambda:InvokeFunctionUrl"
+  function_name          = aws_lambda_function.stats.function_name
+  principal              = "*"
+  function_url_auth_type = "NONE"
+}

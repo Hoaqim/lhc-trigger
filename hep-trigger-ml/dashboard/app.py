@@ -1,9 +1,11 @@
-import os, time, requests, numpy as np, streamlit as st
-URL = os.environ["STATS_URL"]
+import json, time, numpy as np, boto3, streamlit as st
+
+lam = boto3.client("lambda", region_name="eu-central-1")
 st.title("HEP event trigger — live")
 slot = st.empty()
 while True:
-    s = requests.get(URL).json()
+    resp = lam.invoke(FunctionName="hep-stats")
+    s = json.loads(resp["Payload"].read())
     with slot.container():
         a, b = st.columns(2)
         a.metric("Events scored", s["events"])
