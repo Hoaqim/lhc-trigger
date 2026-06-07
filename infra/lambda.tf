@@ -22,6 +22,7 @@ resource "aws_lambda_function" "producer" {
   source_code_hash = data.archive_file.producer.output_base64sha256
   role             = aws_iam_role.lambda.arn
   timeout          = 30
+  memory_size      = 512
   environment {
     variables = {
       QUEUE_URL   = aws_sqs_queue.events.url
