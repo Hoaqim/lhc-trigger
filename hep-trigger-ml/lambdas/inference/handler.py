@@ -22,7 +22,9 @@ def handler(event, context):
         scores.append(round(p, 3))
     ddb.update_item(
         Key={"pk": "stats"},
-        UpdateExpression="ADD n :n, signal :s, correct :c SET recent = :r",
+        UpdateExpression="ADD #n :n, #sig :s, #cor :c SET recent = :r",
+        ExpressionAttributeNames={"#n": "n", "#sig": "signal", "#cor": "correct"},
         ExpressionAttributeValues={":n": n, ":s": signal, ":c": correct,
-                                   ":r": json.dumps(scores[-50:])}) 
+                                   ":r": json.dumps(scores[-50:])})
+ 
     return {"scored": n}
