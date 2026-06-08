@@ -8,3 +8,11 @@ terraform {
 }
 provider "aws" { region = "eu-central-1" }
 resource "random_id" "s" { byte_length = 4 }
+
+terraform {
+  backend "s3" {
+    bucket = "hep-tfstate-lhc-001"
+    key    = "hep-trigger/terraform.tfstate"
+    region = "eu-central-1"
+  }
+}
