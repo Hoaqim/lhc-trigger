@@ -1,6 +1,12 @@
+terraform {
+  required_providers {
+    aws = { source = "hashicorp/aws", version = "~> 5.0" }
+  }
+}
+provider "aws" { region = "eu-central-1" }
+
 variable "github_repo" {
-  description = "owner/repo"
-  type        = string
+  type    = string
   default = "Hoaqim/lhc-trigger"
 }
 
@@ -33,12 +39,8 @@ resource "aws_iam_role" "gha_deploy" {
   name               = "hep-gha-deploy"
   assume_role_policy = data.aws_iam_policy_document.gha_assume.json
 }
-
 resource "aws_iam_role_policy_attachment" "gha_admin" {
   role       = aws_iam_role.gha_deploy.name
-  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"   # simplest for a course project
+  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
 }
-
-output "gha_role_arn" {
-  value = aws_iam_role.gha_deploy.arn
-}
+output "gha_role_arn" { value = aws_iam_role.gha_deploy.arn }
